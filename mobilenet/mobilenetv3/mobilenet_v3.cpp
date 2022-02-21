@@ -139,9 +139,9 @@ ILayer* seLayer(INetworkDefinition *network, std::map<std::string, Weights>& wei
     IPoolingLayer* l1 = network->addPoolingNd(input, PoolingType::kAVERAGE, DimsHW(w, h));
     assert(l1);
     l1->setStrideNd(DimsHW{w, h});
-    IFullyConnectedLayer* l2 = network->addFullyConnected(*l1->getOutput(0), BS*c/4, weightMap[lname+"fc.0.weight"], weightMap[lname+"fc.0.bias"]);
+    IFullyConnectedLayer* l2 = network->addFullyConnected(*l1->getOutput(0), c/4, weightMap[lname+"fc.0.weight"], weightMap[lname+"fc.0.bias"]);
     IActivationLayer* relu1 = network->addActivation(*l2->getOutput(0), ActivationType::kRELU);
-    IFullyConnectedLayer* l4 = network->addFullyConnected(*relu1->getOutput(0), BS*c, weightMap[lname+"fc.2.weight"], weightMap[lname+"fc.2.bias"]);
+    IFullyConnectedLayer* l4 = network->addFullyConnected(*relu1->getOutput(0), c, weightMap[lname+"fc.2.weight"], weightMap[lname+"fc.2.bias"]);
 
     auto hsig = network->addActivation(*l4->getOutput(0), ActivationType::kHARD_SIGMOID);
     assert(hsig);
@@ -275,7 +275,7 @@ ICudaEngine* createEngineSmall(unsigned int maxBatchSize, IBuilder* builder, IBu
     assert(fc1);
     ILayer* bn1 = addBatchNorm(network, weightMap, *fc1->getOutput(0), "classifier.1", 1e-5);
     ILayer* sw2 = hSwish(network, *bn1->getOutput(0), "hSwish.1");
-    IFullyConnectedLayer* fc2 = network->addFullyConnected(*sw2->getOutput(0), 1000, weightMap["classifier.3.weight"], weightMap["classifier.3.bias"]);
+    IFullyConnectedLayer* fc2 = network->addFullyConnected(*sw2->getOutput(0), OUTPUT_SIZE, weightMap["classifier.3.weight"], weightMap["classifier.3.bias"]);
     ILayer* bn2 = addBatchNorm(network, weightMap, *fc2->getOutput(0), "classifier.4", 1e-5);
     ILayer* sw3 = hSwish(network, *bn2->getOutput(0), "hSwish.2");
 
@@ -338,7 +338,7 @@ ICudaEngine* createEngineLarge(unsigned int maxBatchSize, IBuilder* builder, IBu
     IFullyConnectedLayer* fc1 = network->addFullyConnected(*sw1->getOutput(0), 1280, weightMap["classifier.0.weight"], weightMap["classifier.0.bias"]);
     assert(fc1);
     ILayer* sw2 = hSwish(network, *fc1->getOutput(0), "hSwish.1");
-    IFullyConnectedLayer* fc2 = network->addFullyConnected(*sw2->getOutput(0), 1000, weightMap["classifier.3.weight"], weightMap["classifier.3.bias"]);
+    IFullyConnectedLayer* fc2 = network->addFullyConnected(*sw2->getOutput(0), OUTPUT_SIZE, weightMap["classifier.3.weight"], weightMap["classifier.3.bias"]);
 
     fc2->getOutput(0)->setName(OUTPUT_BLOB_NAME);
     std::cout << "set name out" << std::endl;
