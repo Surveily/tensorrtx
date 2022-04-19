@@ -288,7 +288,7 @@ ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilder
     IPoolingLayer* pool2 = network->addPoolingNd(*cat1->getOutput(0), PoolingType::kAVERAGE, DimsHW{8, 8});
     assert(pool2);
 
-    IFullyConnectedLayer* fc1 = network->addFullyConnected(*pool2->getOutput(0), 1000, weightMap["fc.weight"], weightMap["fc.bias"]);
+    IFullyConnectedLayer* fc1 = network->addFullyConnected(*pool2->getOutput(0), OUTPUT_SIZE, weightMap["fc.weight"], weightMap["fc.bias"]);
     assert(fc1);
 
     fc1->getOutput(0)->setName(OUTPUT_BLOB_NAME);
