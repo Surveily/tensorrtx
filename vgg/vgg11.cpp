@@ -132,7 +132,7 @@ ICudaEngine* createEngine(unsigned int maxBatchSize, IBuilder* builder, IBuilder
     relu1 = network->addActivation(*fc1->getOutput(0), ActivationType::kRELU);
     fc1 = network->addFullyConnected(*relu1->getOutput(0), 4096, weightMap["classifier.3.weight"], weightMap["classifier.3.bias"]);
     relu1 = network->addActivation(*fc1->getOutput(0), ActivationType::kRELU);
-    fc1 = network->addFullyConnected(*relu1->getOutput(0), 1000, weightMap["classifier.6.weight"], weightMap["classifier.6.bias"]);
+    fc1 = network->addFullyConnected(*relu1->getOutput(0), OUTPUT_SIZE, weightMap["classifier.6.weight"], weightMap["classifier.6.bias"]);
 
     fc1->getOutput(0)->setName(OUTPUT_BLOB_NAME);
     std::cout << "set name out" << std::endl;
