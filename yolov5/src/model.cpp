@@ -286,14 +286,15 @@ static IPluginV2Layer* addYoLoLayer(INetworkDefinition *network, std::map<std::s
 ICudaEngine* build_det_engine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt, float& gd, float& gw, std::string& wts_name) {
   INetworkDefinition* network = builder->createNetworkV2(0U);
 
-  // Create input tensor of shape {3, kInputH, kInputW}
-  ITensor* data = network->addInput(kInputTensorName, dt, Dims3{ 3, kInputH, kInputW });
+  ITensor* data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{ INPUT_H, INPUT_W, 1 });
   assert(data);
   std::map<std::string, Weights> weightMap = loadWeights(wts_name);
-
-  // Backbone
-  auto conv0 = convBlock(network, weightMap, *data,  get_width(64, gw), 6, 2, 1,  "model.0");
+  IShuffleLayer* shu=network->addShuffle(*data);
+  shu->setReshapeDimensions(Dims3(1, INPUT_H, INPUT_W));
+  shu->setFirstTranspose(nvinfer1::Permutation{2,0,1});
+  auto conv0 = convBlock(network, weightMap, *shu->getOutput(0),  get_width(64, gw), 6, 2, 1,  "model.0");
   assert(conv0);
+
   auto conv1 = convBlock(network, weightMap, *conv0->getOutput(0), get_width(128, gw), 3, 2, 1, "model.1");
   auto bottleneck_CSP2 = C3(network, weightMap, *conv1->getOutput(0), get_width(128, gw), get_width(128, gw), get_depth(3, gd), true, 1, 0.5, "model.2");
   auto conv3 = convBlock(network, weightMap, *bottleneck_CSP2->getOutput(0), get_width(256, gw), 3, 2, 1, "model.3");
@@ -375,14 +376,15 @@ ICudaEngine* build_det_engine(unsigned int maxBatchSize, IBuilder* builder, IBui
 ICudaEngine* build_det_p6_engine(unsigned int maxBatchSize, IBuilder* builder, IBuilderConfig* config, DataType dt, float& gd, float& gw, std::string& wts_name) {
   INetworkDefinition* network = builder->createNetworkV2(0U);
 
-  // Create input tensor of shape {3, kInputH, kInputW}
-  ITensor* data = network->addInput(kInputTensorName, dt, Dims3{ 3, kInputH, kInputW });
+  ITensor* data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{ INPUT_H, INPUT_W, 1 });
   assert(data);
-
   std::map<std::string, Weights> weightMap = loadWeights(wts_name);
+  IShuffleLayer* shu=network->addShuffle(*data);
+  shu->setReshapeDimensions(Dims3(1, INPUT_H, INPUT_W));
+  shu->setFirstTranspose(nvinfer1::Permutation{2,0,1});
 
   // Backbone
-  auto conv0 = convBlock(network, weightMap, *data,  get_width(64, gw), 6, 2, 1,  "model.0");
+  auto conv0 = convBlock(network, weightMap, *shu->getOutput(0),  get_width(64, gw), 6, 2, 1,  "model.0");
   auto conv1 = convBlock(network, weightMap, *conv0->getOutput(0), get_width(128, gw), 3, 2, 1, "model.1");
   auto c3_2 = C3(network, weightMap, *conv1->getOutput(0), get_width(128, gw), get_width(128, gw), get_depth(3, gd), true, 1, 0.5, "model.2");
   auto conv3 = convBlock(network, weightMap, *c3_2->getOutput(0), get_width(256, gw), 3, 2, 1, "model.3");
