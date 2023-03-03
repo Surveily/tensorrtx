@@ -18,6 +18,7 @@
 // stuff we know about the network and the input/output blobs
 static const int INPUT_H = Yolo::INPUT_H;
 static const int INPUT_W = Yolo::INPUT_W;
+static const int INPUT_C = Yolo::INPUT_C;
 static const int CLASS_NUM = Yolo::CLASS_NUM;
 static const int OUTPUT_SIZE = Yolo::MAX_OUTPUT_BBOX_COUNT * sizeof(Yolo::Detection) / sizeof(float) + 1;  // we assume the yololayer outputs no more than MAX_OUTPUT_BBOX_COUNT boxes that conf >= 0.1
 const char* INPUT_BLOB_NAME = "data";
@@ -41,11 +42,11 @@ ICudaEngine* build_engine(unsigned int maxBatchSize, IBuilder* builder, IBuilder
     INetworkDefinition* network = builder->createNetworkV2(0U);
 
     // Create input tensor of shape {3, INPUT_H, INPUT_W} with name INPUT_BLOB_NAME
-    ITensor* data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{ INPUT_H, INPUT_W, 3 });
+    ITensor* data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{ INPUT_H, INPUT_W, INPUT_C });
     assert(data);
     std::map<std::string, Weights> weightMap = loadWeights(wts_name);
     IShuffleLayer* shu=network->addShuffle(*data);
-    shu->setReshapeDimensions(Dims3(3, INPUT_H, INPUT_W));
+    shu->setReshapeDimensions(Dims3(INPUT_C, INPUT_H, INPUT_W));
     shu->setFirstTranspose(nvinfer1::Permutation{2,0,1});
     auto conv0 = convBlock(network, weightMap, *shu->getOutput(0),  get_width(64, gw), 6, 2, 1,  "model.0");
     assert(conv0);
@@ -131,11 +132,11 @@ ICudaEngine* build_engine_p6(unsigned int maxBatchSize, IBuilder* builder, IBuil
     INetworkDefinition* network = builder->createNetworkV2(0U);
 
     // Create input tensor of shape {3, INPUT_H, INPUT_W} with name INPUT_BLOB_NAME
-    ITensor* data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{ INPUT_H, INPUT_W, 3 });
+    ITensor* data = network->addInput(INPUT_BLOB_NAME, dt, Dims3{ INPUT_H, INPUT_W, INPUT_C });
     assert(data);
     std::map<std::string, Weights> weightMap = loadWeights(wts_name);
     IShuffleLayer* shu=network->addShuffle(*data);
-    shu->setReshapeDimensions(Dims3(3, INPUT_H, INPUT_W));
+    shu->setReshapeDimensions(Dims3(INPUT_C, INPUT_H, INPUT_W));
     shu->setFirstTranspose(nvinfer1::Permutation{2,0,1});
     auto conv0 = convBlock(network, weightMap, *shu->getOutput(0),  get_width(64, gw), 6, 2, 1,  "model.0");
     assert(conv0);
