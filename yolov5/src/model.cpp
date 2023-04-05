@@ -287,9 +287,13 @@ ICudaEngine* build_det_engine(unsigned int maxBatchSize, IBuilder* builder, IBui
   INetworkDefinition* network = builder->createNetworkV2(0U);
 
   // Create input tensor of shape {3, kInputH, kInputW}
-  ITensor* data = network->addInput(kInputTensorName, dt, Dims3{ 3, kInputH, kInputW });
+  ITensor* data = network->addInput(kInputTensorName, dt, Dims3{ kInputH, kInputW, 3 });
   assert(data);
   std::map<std::string, Weights> weightMap = loadWeights(wts_name);
+
+  IShuffleLayer* shu=network->addShuffle(*data);
+  shu->setReshapeDimensions(Dims3(INPUT_C, INPUT_H, INPUT_W));
+  shu->setFirstTranspose(nvinfer1::Permutation{2,0,1});
 
   // Backbone
   auto conv0 = convBlock(network, weightMap, *data,  get_width(64, gw), 6, 2, 1,  "model.0");
@@ -376,10 +380,13 @@ ICudaEngine* build_det_p6_engine(unsigned int maxBatchSize, IBuilder* builder, I
   INetworkDefinition* network = builder->createNetworkV2(0U);
 
   // Create input tensor of shape {3, kInputH, kInputW}
-  ITensor* data = network->addInput(kInputTensorName, dt, Dims3{ 3, kInputH, kInputW });
+  ITensor* data = network->addInput(kInputTensorName, dt, Dims3{ kInputH, kInputW, 3 });
   assert(data);
-
   std::map<std::string, Weights> weightMap = loadWeights(wts_name);
+
+  IShuffleLayer* shu=network->addShuffle(*data);
+  shu->setReshapeDimensions(Dims3(INPUT_C, INPUT_H, INPUT_W));
+  shu->setFirstTranspose(nvinfer1::Permutation{2,0,1});
 
   // Backbone
   auto conv0 = convBlock(network, weightMap, *data,  get_width(64, gw), 6, 2, 1,  "model.0");
@@ -480,9 +487,13 @@ ICudaEngine* build_cls_engine(unsigned int maxBatchSize, IBuilder* builder, IBui
   INetworkDefinition* network = builder->createNetworkV2(0U);
 
   // Create input tensor
-  ITensor* data = network->addInput(kInputTensorName, dt, Dims3{ 3, kClsInputH, kClsInputW });
+  ITensor* data = network->addInput(kInputTensorName, dt, Dims3{ kInputH, kInputW, 3 });
   assert(data);
   std::map<std::string, Weights> weightMap = loadWeights(wts_name);
+
+  IShuffleLayer* shu=network->addShuffle(*data);
+  shu->setReshapeDimensions(Dims3(INPUT_C, INPUT_H, INPUT_W));
+  shu->setFirstTranspose(nvinfer1::Permutation{2,0,1});
 
   // Backbone
   auto conv0 = convBlock(network, weightMap, *data,  get_width(64, gw), 6, 2, 1,  "model.0");
